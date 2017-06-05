@@ -1,0 +1,29 @@
+#!/bin/bash
+session_on_prompt() {
+    history -a
+    pwd > ${SESSION_DIR}/pwd
+    echo $WINDOWID > $SESSION_DIR/winid
+}
+
+init() {
+    if [[ -z "$SESSION_NAME" ]]; then
+        SESSION_NAME="$1"
+    fi
+    SESSION_DIR="${HOME}/.bash_sessions/$SESSION_NAME"
+    mkdir -p "${SESSION_DIR}"
+    HISTFILE="${SESSION_DIR}/history"
+    OLD_PROMPT_COMMAND="$PROMPT_COMMAND"
+    PROMPT_COMMAND="$PROMPT_COMMAND; session_on_prompt"
+}
+
+enter() {
+    init "$1"
+    history -c
+    history -r
+    cd $(cat ${SESSION_DIR}/pwd)
+}
+
+create() {
+    init "$1"
+    session_on_prompt
+}
