@@ -1,11 +1,10 @@
 #!/bin/bash
-session_on_prompt() {
+bsr_session_on_prompt() {
     history -a
     pwd > ${SESSION_DIR}/pwd
-    echo $WINDOWID > $SESSION_DIR/winid
 }
 
-init() {
+bsr_init() {
     if [[ -z "$SESSION_NAME" ]]; then
         SESSION_NAME="$1"
     fi
@@ -14,16 +13,25 @@ init() {
     HISTFILE="${SESSION_DIR}/history"
     OLD_PROMPT_COMMAND="$PROMPT_COMMAND"
     PROMPT_COMMAND="$PROMPT_COMMAND; session_on_prompt"
+    BSR_ACTIVE=true
+    echo $WINDOWID > "$SESSION_DIR"/winid
 }
 
-enter() {
-    init "$1"
+bsr_enter() {
+    bsr_init "$1"
     history -c
     history -r
     cd $(cat ${SESSION_DIR}/pwd)
+    echo "Entering session: $1"
 }
 
-create() {
-    init "$1"
-    session_on_prompt
+bsr_create() {
+    if [[ $BSR="true" ]]; then
+        exit;
+    fi
+    echo "Creating Session: $1"
+    bsr_init "$1"
+    bsr_session_on_prompt
+    echo "Entering Session: $1"
 }
+
