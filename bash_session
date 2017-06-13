@@ -12,12 +12,17 @@ bsr_init() {
     mkdir -p "${SESSION_DIR}"
     HISTFILE="${SESSION_DIR}/history"
     OLD_PROMPT_COMMAND="$PROMPT_COMMAND"
-    PROMPT_COMMAND="$PROMPT_COMMAND; session_on_prompt"
+    PROMPT_COMMAND="$PROMPT_COMMAND; bsr_session_on_prompt"
     BSR_ACTIVE=true
-    echo $WINDOWID > "$SESSION_DIR"/winid
+    echo -n $WINDOWID > "$SESSION_DIR"/winid
+    echo -n $$ > ${SESSION_DIR}/pid
 }
 
 bsr_enter() {
+    if [[ true == $BSR_ACTIVE ]]; then
+        echo "already in a session: \"$SESSION_NAME\", not entering another"
+        return;
+    fi
     bsr_init "$1"
     history -c
     history -r
@@ -26,8 +31,10 @@ bsr_enter() {
 }
 
 bsr_create() {
-    if [[ $BSR="true" ]]; then
-        exit;
+    echo -- $BSR_ACTIVE
+    if [[ "true" == $BSR_ACTIVE ]]; then
+        echo "already in a session: \"$SESSION_NAME\", not creating another"
+        return;
     fi
     echo "Creating Session: $1"
     bsr_init "$1"
@@ -35,3 +42,18 @@ bsr_create() {
     echo "Entering Session: $1"
 }
 
+
+bsr_list() {
+    for S in ${HOME}/.bash_sessions/*/; do
+        pid="$(cat ${S}pid 2>/dev/null)";
+        if [[ -z $pid ]]; then
+           sigil="[D]"
+        elif ps "$pid" | grep -q bash; then
+            sigil="[A]"
+        else
+            sigil="[D]"
+        fi
+        name=$(basename "$S")
+        echo "$name    $sigil"
+    done
+}
